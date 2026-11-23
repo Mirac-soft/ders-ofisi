@@ -1,0 +1,5 @@
+Dersler/
+__pycache__/
+.superpowers/
+node_modules/
+*.tgz

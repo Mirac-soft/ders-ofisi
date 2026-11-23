@@ -142,3 +142,12 @@ Dersler/
 - Panelin tasarımı (Markdown ve LaTeX gösterimi gerekli, kütüphane seçimi serbest).
 - Asistan talimat metinlerinin tam ifadesi.
 - Hata mesajları (ör. Claude Code kurulu değil veya giriş yapılmamış) ve yeniden deneme davranışı.
+
+## 11. Yapılacaklar (kullanıcı istekleri, 2026-11-23)
+
+1. **Bir derse birden fazla PDF, devamı gibi (kullanıcı söyledi):** Bir derse birkaç PDF yüklenecek. Asistanlar her yeni PDF'i bir öncekinin devamı olarak görmeli: ders malzemesi yükleme sırasıyla tek bir bütün sayılır.
+   - Önerilen anlamı (kullanıcı onaylamadı): PDF'ler yükleme sırasıyla dizilir. Özet ve formüller dersin tamamı için tek, sıralı bir akış olarak gösterilir: PDF 2'nin bölümleri, PDF 1'in bölümlerinin ardından gelir. Yeni PDF işlenirken Özetçi ve Formülcü'ye önceki malzemenin kısa özeti verilir; böylece önceden anlatılan tanımları tekrar etmez, "önceki bölümde geçen X" diye bağ kurar.
+2. Kesilen görüntüyü elle düzeltme; PDF'in kapsadığı konuları panelden düzeltme (konu adı değişince eşleştirme de güncellensin).
+3. Hatalı yüklenen PDF'i arayüzden silme.
+4. 60 karakterden uzun PDF adlarını kabul etme ya da sebebini açıkça söyleme.
+5. İlk okuma sürerken Sınavcı ve Soru-cevap hocası beklemesin (etkileşimli işlere öncelik).

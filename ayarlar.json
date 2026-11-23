@@ -1,0 +1,15 @@
+{
+  "claude_komutu": ["C:/Users/mirac/.local/bin/claude.exe"],
+  "modeller": {
+    "cevirici": "sonnet",
+    "ozetci": "sonnet",
+    "formulcu": "sonnet",
+    "sinavci": "sonnet",
+    "soru_cevap": "sonnet",
+    "arastirmaci": "haiku"
+  },
+  "es_zamanli": 2,
+  "parca_sayfa": 20,
+  "port": 8765,
+  "dersler_klasoru": "Dersler"
+}

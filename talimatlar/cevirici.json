@@ -1,0 +1,22 @@
+{
+  "type": "object",
+  "properties": {
+    "markdown": {"type": "string"},
+    "gorseller": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "yer_tutucu": {"type": "string"},
+          "sayfa": {"type": "integer"},
+          "kutu": {"type": "array", "items": {"type": "number"}, "minItems": 4, "maxItems": 4},
+          "tur": {"type": "string", "enum": ["formul", "sekil"]},
+          "aciklama": {"type": "string"}
+        },
+        "required": ["yer_tutucu", "sayfa", "kutu", "tur", "aciklama"]
+      }
+    },
+    "konular": {"type": "array", "items": {"type": "string"}}
+  },
+  "required": ["markdown", "gorseller", "konular"]
+}

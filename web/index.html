@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Ders Ofisi — NYC</title>
+  <link rel="stylesheet" href="stil.css">
+  <script type="importmap">
+    { "imports": { "three": "./vendor/three.module.js", "three/addons/": "./vendor/" } }
+  </script>
+</head>
+<body>
+  <header id="ust">
+    <strong>🏙️ Ders Ofisi</strong>
+    <span id="saat"></span>
+  </header>
+  <main id="sahne"></main>
+  <aside id="panel" hidden>
+    <button id="kapat" aria-label="Paneli kapat">✕</button>
+    <h2 id="panel-baslik"></h2>
+    <div id="panel-icerik"></div>
+  </aside>
+  <script type="module">
+    import { ofisKur, ASISTANLAR } from "./ofis.js";
+    const panel = document.getElementById("panel");
+    document.getElementById("kapat").onclick = () => (panel.hidden = true);
+    const ofis = ofisKur(document.getElementById("sahne"), (id) => {
+      const a = ASISTANLAR.find((x) => x.id === id);
+      document.getElementById("panel-baslik").textContent = `${a.emoji} ${a.ad}`;
+      document.getElementById("panel-icerik").textContent = a.gorev + " (yakında)";
+      panel.hidden = false;
+    });
+    if (new URLSearchParams(location.search).has("demo")) {
+      const durumlar = ["calisiyor", "bitti", "bekliyor", "hata", "bosta"];
+      let i = 0;
+      setInterval(() => {
+        const a = ASISTANLAR[i % ASISTANLAR.length];
+        const d = durumlar[Math.floor(i / ASISTANLAR.length) % durumlar.length];
+        ofis.durumAyarla(a.id, d, i % 4 === 0 ? "Math 1" : null);
+        i++;
+      }, 900);
+    }
+  </script>
+</body>
+</html>

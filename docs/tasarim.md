@@ -91,7 +91,7 @@ Dersler/
 ```
 
 **Akış**
-1. `baslat.bat` dosyasına çift tıklanır. Sunucu açılır ve tarayıcıda ofis açılır.
+1. Masaüstündeki **Ders Ofisi** kısayoluna çift tıklanır (kullanıcı istedi). Sunucu gizli açılır, ofis adres çubuğu olmayan kendi uygulama penceresinde açılır ve aynı anda ders-ofisi klasöründe **Claude Code** terminal penceresi açılır. Claude Code penceresi kullanıcının ofisi yönetmesi/değiştirmesi içindir; asistan işleri ondan bağımsız arka planda çalışır (benim önerim, kullanıcı onayladı: pencere kapansa da asistanlar durmaz).
 2. Ders seçilir ya da yeni ders eklenir. İlk seferde sınav tarihi ve konu listesi girilir (Süre analisti için gerekli).
 3. PDF bırakılır. Metne çevirme parça parça ilerler, Özetçi ve Formülcü her biten parçanın üzerinde çalışır.
 4. Sayaç başlatılır, Mola ona göre hatırlatır.

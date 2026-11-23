@@ -354,7 +354,8 @@ def test_tekrar(self):
 ### Task 7: HTTP sunucu ve başlatıcı
 
 **Files:**
-- Create: `ofis/sunucu.py`, `baslat.bat`, `tests/test_sunucu.py`
+- Create: `ofis/sunucu.py`, `tests/test_sunucu.py`
+- Modify: `baslat.ps1`
 
 **Interfaces:**
 - Consumes: Task 1–6 hepsi
@@ -380,7 +381,7 @@ def test_tekrar(self):
 
 Kurallar: `ThreadingHTTPServer(("127.0.0.1", port))`; `GecersizAd` → 400; bilinmeyen ders → 404; PDF en fazla 200 MB, `%PDF` ile başlamıyorsa 400; senkron uçlarda `LimitDolu` → 429 `{"hata": "limit"}`. `X-Dosya-Adi` yalnızca taban adı alınır (`Path(...).name`) ve ad kuralından geçer.
 
-`baslat.bat`: `cd /d %~dp0`; `python -c "import fitz" || pip install pymupdf`; `start "" http://127.0.0.1:8765/`; `python -m ofis.sunucu`. Claude bulunamazsa sunucu açılışta uyarı basar ve `/api/dersler` yanıtına `"uyari"` ekler (ön yüz gösterir).
+`baslat.ps1` (Task 0 sonrası yapıldı, masaüstü kısayolu "Ders Ofisi" bunu çalıştırır): sunucu kapalıysa gizli `python -m ofis.sunucu` başlatır, ofisi Chrome `--app` penceresinde açar, ders-ofisi klasöründe Windows Terminal içinde Claude Code açar. Bu task'ta yalnızca başa `python -c "import fitz"` yoksa `pip install pymupdf` eklenir. Claude bulunamazsa sunucu açılışta uyarı basar ve `/api/dersler` yanıtına `"uyari"` ekler (ön yüz gösterir).
 
 - [ ] **Step 1: Testleri yaz** (sunucuyu geçici kökte rastgele portta thread'de başlat, `urllib.request` ile)
 

@@ -9,3 +9,48 @@ html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, 
 #panel[hidden] { display: none; }
 #kapat { position: absolute; top: 10px; right: 12px; background: none; border: 0; color: #ccc; font-size: 20px; cursor: pointer; }
 #ipucu { font-size: 13px; opacity: .6; }
+#ust select, #ust button, #pdf-alan { background: #2a3142; color: #eee; border: 1px solid #3c4559; border-radius: 6px; padding: 4px 10px; font: inherit; font-size: 14px; cursor: pointer; }
+#ust button:hover, #pdf-alan:hover { background: #36405a; }
+#sayac { font-variant-numeric: tabular-nums; }
+#devam { background: #8a5a00 !important; }
+body.surukle #pdf-alan { outline: 2px dashed #ffd27a; }
+body.surukle::after { content: "PDF'i bırak"; position: fixed; inset: 44px 0 0; display: grid; place-items: center; font-size: 32px;
+  background: rgba(10, 14, 24, .55); z-index: 5; pointer-events: none; }
+#uyari { position: fixed; top: 52px; left: 50%; transform: translateX(-50%); z-index: 4; background: #7a2630; color: #fff;
+  padding: 8px 16px; border-radius: 8px; cursor: pointer; max-width: 80vw; }
+#uyari.bilgi { background: #1f5d4a; }
+#panel h2 { margin: 4px 0 12px; }
+#panel h4 { margin: 16px 0 6px; }
+#panel button { background: #2f6fed; color: #fff; border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer; font: inherit; }
+#panel textarea, #panel input:not([type=checkbox]), #panel select { width: 100%; box-sizing: border-box; background: #11151f; color: #eee;
+  border: 1px solid #3c4559; border-radius: 6px; padding: 6px; font: inherit; margin: 4px 0; }
+.md { line-height: 1.55; }
+.md img { max-width: 100%; background: #fff; border-radius: 4px; padding: 4px; cursor: zoom-in; display: block; margin: 6px 0; }
+.md blockquote { margin: 6px 0; padding: 4px 10px; border-left: 3px solid #555; }
+.md blockquote.onemli { border-color: #ffd27a; background: rgba(255, 210, 122, .08); }
+.ilerleme, .kucuk { font-size: 13px; opacity: .7; margin: 4px 0; }
+.yorum { padding: 8px 10px; border-radius: 6px; background: #2a3142; }
+.yorum.iyi { background: #1f5d4a; } .yorum.kotu { background: #7a2630; }
+.ozet-tablo { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; }
+.ozet-tablo dt { opacity: .7; } .ozet-tablo dd { margin: 0; }
+.grafik { display: flex; gap: 6px; height: 90px; align-items: flex-end; margin: 12px 0; }
+.grafik div { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.grafik span { width: 100%; background: #2f6fed; border-radius: 3px 3px 0 0; min-height: 2px; }
+.konu-liste label, .konular label { display: block; padding: 2px 0; }
+.konular { border: 1px solid #3c4559; border-radius: 6px; margin: 0 0 8px; max-height: 160px; overflow: auto; }
+.kaynak { font-size: 12px; opacity: .8; margin: 2px 0 8px; } .kaynak a { color: #8ab4ff; }
+.etiket { background: #3c4559; padding: 1px 6px; border-radius: 8px; }
+.akis { max-height: 50vh; overflow: auto; margin: 10px 0; display: flex; flex-direction: column; gap: 8px; }
+.mesaj { padding: 8px 10px; border-radius: 8px; max-width: 92%; }
+.mesaj.ben { align-self: flex-end; background: #2f6fed; } .mesaj.o { align-self: flex-start; background: #2a3142; }
+.mesaj img { max-width: 100%; background: #fff; }
+form.yaz { display: flex; gap: 6px; } form.yaz input { flex: 1; }
+.notlar li, .tekrar li { margin: 6px 0; }
+.hata { color: #ff8a8a; }
+dialog { background: #1b1f2b; color: #eee; border: 1px solid #3c4559; border-radius: 10px; width: min(420px, 90vw); }
+dialog label { display: block; margin: 8px 0; } dialog input, dialog textarea { width: 100%; box-sizing: border-box; margin-top: 4px;
+  background: #11151f; color: #eee; border: 1px solid #3c4559; border-radius: 6px; padding: 6px; font: inherit; }
+dialog menu { display: flex; justify-content: flex-end; gap: 8px; padding: 0; }
+dialog button { background: #2f6fed; color: #fff; border: 0; border-radius: 6px; padding: 6px 14px; cursor: pointer; }
+#buyut { position: fixed; inset: 0; background: rgba(0,0,0,.8); z-index: 10; display: grid; place-items: center; cursor: zoom-out; overflow: auto; }
+#buyut[hidden] { display: none; } #buyut img { max-width: 95vw; background: #fff; }

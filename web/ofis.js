@@ -17,7 +17,7 @@ export const ASISTANLAR = [
 ];
 const TEN = [0xf1c27d, 0xe0ac69, 0xc68642, 0x8d5524, 0xffdbac, 0xd1a17a, 0xa5714e, 0xeac086, 0xb98865];
 const SAC = [0x2b1d14, 0x3b2a20, 0x0f0f0f, 0x6b4423, 0x1a1a1a, 0x8a5a2b, 0x2b1d14, 0x4a3426, 0x111111];
-const DURUM_SIMGE = { calisiyor: "…", bitti: "✅", bekliyor: "💤", hata: "⚠️" };
+const DURUM_SIMGE = { calisiyor: "…", bitti: "✅", bekliyor: "💤", hata: "⚠️", mola: "☕", hatirlat: "🔔" };
 
 const ODA = { x: 10, z: 7, h: 3 }; // yarım genişlik, yarım derinlik, tavan
 const KAT = 150; // ofisin bulunduğu yükseklik

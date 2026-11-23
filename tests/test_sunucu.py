@@ -108,7 +108,8 @@ class SunucuTest(SahteClaudeTest):
         self.assertIn(("cevirici", "calisiyor"), gorulen)
         self.assertIn(("ozetci", "bitti"), gorulen)
         d = self.istek("/api/ders/CS")[1]
-        self.assertEqual(d["pdfler"], [{"ad": "Ders Notu", "tamam": 2, "toplam": 2}])
+        self.assertEqual([(p["ad"], p["tamam"], p["toplam"]) for p in d["pdfler"]], [("Ders Notu", 2, 2)])
+        self.assertIsInstance(d["pdfler"][0]["parca_sn"], (int, float))  # kalan süre tahmini için
         self.assertIn("Ders Notu", d["ozetler"])
         s, png = self.istek("/api/ders/CS/dosya/gorseller/Ders%20Notu-s2-1.png")
         self.assertEqual((s, png[:4]), (200, b"\x89PNG"))

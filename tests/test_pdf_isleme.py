@@ -63,6 +63,15 @@ class PdfIslemeTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             pdf_isleme.kes(self.pdf, 0, [0, 0, 10, 10], self.d / "x.png")
 
+    def test_sayfa_gorselleri_ve_metin(self):
+        yollar = pdf_isleme.sayfa_gorselleri(self.pdf, 21, 23, self.d / "sayfalar")
+        self.assertEqual([y.name for y in yollar], ["s-021.png", "s-022.png", "s-023.png"])
+        self.assertEqual(pymupdf.Pixmap(str(yollar[0])).width, round(600 * 110 / 72))
+        metin = pdf_isleme.metin_katmani(self.pdf, 21, 22)
+        self.assertIn("--- Sayfa 21 ---", metin)
+        self.assertIn("Sayfa 22  F = m a", metin)
+        self.assertNotIn("Sayfa 23", metin)
+
     def test_tam_sayfa(self):
         c = pdf_isleme.tam_sayfa(self.pdf, 1, self.d / "s1.png")
         self.assertEqual(pymupdf.Pixmap(str(c)).width, round(600 * 120 / 72))

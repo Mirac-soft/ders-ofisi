@@ -4,7 +4,7 @@ import shutil
 import unittest
 
 from ofis import cevirme, dersler
-from ofis.claude_calistir import LimitDolu
+from ofis.claude_calistir import ClaudeHatasi, LimitDolu
 from tests.test_pdf_isleme import ornek_pdf
 from tests.yardim import SahteClaudeTest
 
@@ -42,11 +42,30 @@ class CevirmeTest(SahteClaudeTest):
         self.assertEqual(gorseller[1], {"dosya": "notlar-s22-1.png", "sayfa": 22, "tur": "formul", "aciklama": "F=ma", "parca": 2})
         konular = json.loads((self.ders / "metin/notlar/konular.json").read_text("utf-8"))
         self.assertEqual(konular["2"], ["Limit"])
-        self.assertEqual(self.durum(), {"tamam": [1, 2, 3], "toplam": 3})
+        self.assertEqual((self.durum()["tamam"], self.durum()["toplam"]), ([1, 2, 3], 3))
         c = self.cagrilar()[1]
-        self.assertIn("pdf/notlar-parcalar/parca-02.pdf", c["argv"][c["argv"].index("-p") + 1])
-        self.assertIn("Limit", c["argv"][c["argv"].index("-p") + 1])
+        istem = c["argv"][c["argv"].index("-p") + 1]
+        # Claude PDF'i değil, sayfa resimlerini ve metin katmanını okur (Read aracı PDF için poppler ister)
+        self.assertIn("pdf/notlar-sayfalar/s-021.png", istem)
+        self.assertIn("pdf/notlar-sayfalar/s-040.png", istem)
+        self.assertNotIn(".pdf", istem)
+        self.assertTrue((self.ders / "pdf/notlar-sayfalar/s-021.png").exists())
+        self.assertIn("pdf/notlar-sayfalar/metin-02.txt", istem)
+        self.assertIn("Sayfa 21  F = m a", (self.ders / "pdf/notlar-sayfalar/metin-02.txt").read_text("utf-8"))
+        self.assertIn("Limit", istem)
         self.assertEqual(c["argv"][c["argv"].index("--model") + 1], "sonnet")
+
+    def test_bos_cevap_tamam_sayilmaz(self):
+        self.cevaplar(cevirici={"markdown": "  ", "gorseller": [], "konular": []})
+        with self.assertRaises(ClaudeHatasi):
+            self.cevir()
+        self.assertEqual(self.durum()["tamam"], [])
+        self.assertEqual(self.geri, [])
+        self.assertFalse((self.ders / "metin/notlar/parca-01.md").exists())
+
+    def test_sure_kaydedilir(self):
+        self.cevir()
+        self.assertEqual(len(self.durum()["sureler"]), 3)
 
     def test_limitte_durur_ve_devam_eder(self):
         os.environ["SAHTE_CLAUDE_LIMIT_SONRA"] = "1"
@@ -59,8 +78,8 @@ class CevirmeTest(SahteClaudeTest):
         self.assertEqual(self.durum()["tamam"], [1, 2, 3])
         istemler = [c["argv"][c["argv"].index("-p") + 1] for c in self.cagrilar()]
         self.assertEqual(len(istemler), 4)  # 1 başarılı + 1 limit + 2 devam
-        self.assertIn("parca-02", istemler[2])
-        self.assertIn("parca-03", istemler[3])
+        self.assertIn("metin-02.txt", istemler[2])
+        self.assertIn("metin-03.txt", istemler[3])
 
     def test_yeniden_baslatmada_devam(self):
         self.cevir()

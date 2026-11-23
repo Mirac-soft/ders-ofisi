@@ -63,6 +63,15 @@ function masalariCiz() {
   const takildi = [...durum.olaylar.values()].some((o) => o.ders === durum.ders && (o.durum === "bekliyor" || o.durum === "hata"));
   const suruyor = [...durum.olaylar.values()].some((o) => o.ders === durum.ders && o.asistan === "cevirici" && o.durum === "calisiyor");
   $("#devam").hidden = !(takildi || (yarim && !suruyor));
+  // İlerleme: hangi PDF kaç parça okundu, tahmini kalan süre, kaç asistan çalışıyor
+  const parcalar = (durum.bilgi?.pdfler || []).filter((p) => p.toplam == null || p.tamam < p.toplam).map((p) => {
+    const kalan = p.parca_sn && p.toplam ? Math.ceil(((p.toplam - p.tamam) * p.parca_sn) / 60) : null;
+    return `📖 ${p.ad}: ${p.tamam}/${p.toplam ?? "?"} parça${suruyor ? (kalan ? ` · ~${kalan} dk kaldı` : " · ilk parça okunuyor…") : " · durdu"}`;
+  });
+  const calisan = [...durum.olaylar.values()].filter((o) => o.durum === "calisiyor").length;
+  if (calisan) parcalar.push(`⚙️ ${calisan} asistan çalışıyor`);
+  $("#ilerleme").textContent = parcalar.join("  ·  ");
+  $("#ilerleme").hidden = !parcalar.length;
 }
 
 function olaylariDinle() {

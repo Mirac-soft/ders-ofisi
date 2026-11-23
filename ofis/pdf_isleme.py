@@ -62,3 +62,22 @@ def tam_sayfa(pdf: Path, sayfa: int, cikti: Path, dpi: int = 120) -> Path:
         cikti.parent.mkdir(parents=True, exist_ok=True)
         d[sayfa - 1].get_pixmap(dpi=dpi).save(cikti)
     return cikti
+
+
+def sayfa_gorselleri(pdf: Path, ilk: int, son: int, hedef: Path, dpi: int = 110) -> list[Path]:
+    """Claude'un Read aracı büyük PDF'ler için poppler ister; sayfaları resim olarak veririz (PNG her yerde okunur)."""
+    hedef.mkdir(parents=True, exist_ok=True)
+    yollar = []
+    with pymupdf.open(pdf) as d:
+        for no in range(ilk, son + 1):
+            yol = hedef / f"s-{no:03d}.png"
+            if not yol.exists():
+                d[no - 1].get_pixmap(dpi=dpi).save(yol)
+            yollar.append(yol)
+    return yollar
+
+
+def metin_katmani(pdf: Path, ilk: int, son: int) -> str:
+    """PDF'in seçilebilir metni (varsa): Claude metni resimden değil buradan doğru aktarsın."""
+    with pymupdf.open(pdf) as d:
+        return "\n".join(f"--- Sayfa {no} ---\n{d[no - 1].get_text().strip()}" for no in range(ilk, son + 1))

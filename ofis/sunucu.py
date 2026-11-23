@@ -75,7 +75,9 @@ class Ofis:
         sonuc = []
         for pdf in sorted((dyol / "pdf").glob("*.pdf")):
             d = cevirme.json_oku(dyol / "metin" / pdf.stem / "durum.json", {"tamam": [], "toplam": None})
-            sonuc.append({"ad": pdf.stem, "tamam": len(d["tamam"]), "toplam": d["toplam"]})
+            sureler = d.get("sureler") or []
+            sonuc.append({"ad": pdf.stem, "tamam": len(d["tamam"]), "toplam": d["toplam"],
+                          "parca_sn": sum(sureler) / len(sureler) if sureler else None})  # kalan süre tahmini
         return sonuc
 
     def devam(self, ders):

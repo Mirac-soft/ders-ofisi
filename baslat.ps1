@@ -19,5 +19,5 @@ else { Start-Process msedge.exe -ArgumentList "--app=$url" }
 
 # Claude Code: ofis klasöründe, ayrı terminal penceresinde
 $claude = "$env:USERPROFILE\.local\bin\claude.exe"
-if (Get-Command wt.exe -ErrorAction SilentlyContinue) { Start-Process wt.exe -ArgumentList "-d", "`"$kok`"", "--title", "Ders Ofisi - Claude", "`"$claude`"" }
+if (Get-Command wt.exe -ErrorAction SilentlyContinue) { Start-Process wt.exe -ArgumentList "-d `"$kok`" --title `"Ders Ofisi - Claude`" `"$claude`"" } # tek metin: boşluklu başlık bölünmesin
 else { Start-Process $claude -WorkingDirectory $kok }

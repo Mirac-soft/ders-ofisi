@@ -1,0 +1,4 @@
+{"type": "object", "properties": {"formuller": {"type": "array", "items": {"type": "object", "properties": {
+  "dosya": {"type": "string"}, "ad": {"type": "string"}, "anlam": {"type": "string"},
+  "ne_zaman": {"type": "string"}, "soru_tipi": {"type": "string"}},
+  "required": ["dosya", "ad", "anlam", "ne_zaman", "soru_tipi"]}}}, "required": ["formuller"]}

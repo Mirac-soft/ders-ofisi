@@ -1,0 +1,4 @@
+{"type": "object", "properties": {"sorular": {"type": "array", "items": {"type": "object", "properties": {
+  "metin": {"type": "string"}, "zorluk": {"type": "string", "enum": ["kolay", "orta", "zor"]},
+  "kaynak": {"type": ["string", "null"]}, "konu": {"type": "string"}},
+  "required": ["metin", "zorluk", "kaynak", "konu"]}}}, "required": ["sorular"]}

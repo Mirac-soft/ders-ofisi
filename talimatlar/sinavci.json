@@ -1,0 +1,5 @@
+{"type": "object", "properties": {"mesaj": {"type": "string"}, "bitti": {"type": "boolean"},
+  "sonuc": {"anyOf": [{"type": "null"}, {"type": "object", "properties": {"dogru": {"type": "integer"},
+    "yanlis": {"type": "integer"}, "eksik_konular": {"type": "array", "items": {"type": "string"}}},
+    "required": ["dogru", "yanlis", "eksik_konular"]}]}},
+  "required": ["mesaj", "bitti", "sonuc"]}

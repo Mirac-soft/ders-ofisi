@@ -8,3 +8,4 @@ html, body { margin: 0; height: 100%; overflow: hidden; font-family: system-ui, 
   box-shadow: -4px 0 20px rgba(0,0,0,.5); padding: 16px 20px; overflow: auto; z-index: 3; }
 #panel[hidden] { display: none; }
 #kapat { position: absolute; top: 10px; right: 12px; background: none; border: 0; color: #ccc; font-size: 20px; cursor: pointer; }
+#ipucu { font-size: 13px; opacity: .6; }

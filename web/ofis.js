@@ -215,6 +215,32 @@ function odaKur(sahne) {
   }
   sahne.add(kutu(0.35, 1.9, 0.03, raf, X - 0.2, 0.95, 0.7), kutu(0.35, 1.9, 0.03, raf, X - 0.2, 0.95, 2.5));
 
+  // Arka duvar: kapı, şehir tablosu, oturma köşesi ve kahve tezgâhı
+  const koyuAhsap = std(0x4a3426, 0.6);
+  sahne.add(kutu(1.1, 2.2, 0.06, koyuAhsap, 0, 1.1, Z - 0.04, false));
+  sahne.add(kutu(1.25, 0.08, 0.08, std(0x2b2f36, 0.4, 0.6), 0, 2.24, Z - 0.05, false));
+  sahne.add(kutu(0.04, 0.04, 0.14, std(0xc0c0c0, 0.3, 1), 0.42, 1.05, Z - 0.1, false));
+  sahne.add(kutu(2.2, 1.1, 0.04, std(0x1a1a1a, 0.5), -4.5, 1.7, Z - 0.03, false));
+  const tablo = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.0), new THREE.MeshStandardMaterial({
+    map: tuvalDoku(256, (g, n) => { // basit gece silüeti tablosu
+      const gr = g.createLinearGradient(0, 0, 0, n); gr.addColorStop(0, "#1b2550"); gr.addColorStop(1, "#f08a4b");
+      g.fillStyle = gr; g.fillRect(0, 0, n, n); g.fillStyle = "#141a2e";
+      const rr = rastgele(5); for (let x = 0; x < n; x += 14 + rr() * 16) g.fillRect(x, n * (0.35 + rr() * 0.4), 12 + rr() * 14, n);
+    }), roughness: 0.6 }));
+  tablo.rotation.y = Math.PI; tablo.position.set(-4.5, 1.7, Z - 0.06);
+  sahne.add(tablo);
+  const kumas = std(0x3e4a5c, 0.95);
+  sahne.add(kutu(2.2, 0.42, 0.85, kumas, -4.5, 0.21, Z - 0.65), kutu(2.2, 0.5, 0.2, kumas, -4.5, 0.67, Z - 0.18));
+  for (const sx of [-1, 1]) sahne.add(kutu(0.2, 0.62, 0.85, kumas, -4.5 + sx * 1.1, 0.31, Z - 0.6));
+  sahne.add(kutu(1.1, 0.04, 0.6, std(0xd9c3a0, 0.4), -4.5, 0.42, Z - 1.75), kutu(0.9, 0.38, 0.4, std(0x2b2f36, 0.5, 0.5), -4.5, 0.2, Z - 1.75));
+  sahne.add(kutu(2.6, 0.92, 0.6, std(0xf0ede6, 0.5), 4.6, 0.46, Z - 0.32), kutu(2.65, 0.04, 0.64, std(0x2a2a2a, 0.3), 4.6, 0.94, Z - 0.32));
+  sahne.add(kutu(0.35, 0.42, 0.38, std(0x1a1a1a, 0.3, 0.6), 4.0, 1.17, Z - 0.35));
+  sahne.add(kutu(0.6, 0.35, 0.45, std(0xc0c4c8, 0.3, 0.8), 5.1, 1.135, Z - 0.35));
+  for (let i = 0; i < 3; i++) {
+    const f = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.035, 0.1, 12), std(0xffffff, 0.3));
+    f.position.set(4.4 + i * 0.12, 1.01, Z - 0.5); sahne.add(f);
+  }
+
   // Saksı bitkileri
   const yaprakMat = std(0x3f6e3a, 0.8);
   for (const [x, z] of [[-X + 0.7, -Z + 0.9], [X - 0.7, -Z + 0.9], [-X + 0.6, Z - 0.8]]) {
@@ -259,6 +285,15 @@ function karakter(a, i) {
   const sac = new THREE.Mesh(new THREE.SphereGeometry(0.118, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.55), std(SAC[i], 0.9));
   sac.scale.set(1, 1.15, 1.08); sac.position.set(0, 1.285, -0.02); sac.rotation.x = 0.35;
   g.add(govde, boyun, kafa, sac);
+  const goz = std(0x1a1a1a, 0.3), kas = std(SAC[i], 0.9);
+  for (const s of [-1, 1]) {
+    const gz = new THREE.Mesh(new THREE.SphereGeometry(0.014, 8, 6), goz);
+    gz.position.set(s * 0.04, 1.285, -0.143);
+    const k = kutu(0.04, 0.008, 0.01, kas, s * 0.04, 1.315, -0.14, false);
+    g.add(gz, k);
+  }
+  const agiz = kutu(0.04, 0.006, 0.01, std(0x8a4b3c, 0.6), 0, 1.225, -0.14, false);
+  g.add(agiz);
   for (const s of [-1, 1]) {
     const ust = new THREE.Mesh(new THREE.CapsuleGeometry(0.05, 0.22, 4, 8), kiyafet);
     ust.position.set(s * 0.22, 0.9, -0.08); ust.rotation.x = 0.6;
@@ -309,16 +344,16 @@ function masaKur(a, i, x, z) {
   kisi.position.set(0, 0, 0.72);
   grup.add(kisi);
 
-  const etiket = new THREE.Sprite(new THREE.SpriteMaterial({ map: yaziDokusu([[`${a.emoji} ${a.ad}`, 40, "#fff", 64, "rgba(20,24,32,.72)"]]), depthTest: false }));
+  const etiket = new THREE.Sprite(new THREE.SpriteMaterial({ map: yaziDokusu([[`${a.emoji} ${a.ad}`, 40, "#fff", 64, "rgba(20,24,32,.72)"]]) }));
   etiket.scale.set(1.7, 0.42, 1);
   etiket.position.set(0, 1.68, 0.5);
-  const simge = new THREE.Sprite(new THREE.SpriteMaterial({ depthTest: false }));
+  const simge = new THREE.Sprite(new THREE.SpriteMaterial());
   simge.scale.set(1.4, 0.7, 1);
   simge.position.set(0, 2.08, 0.5);
   simge.visible = false;
   grup.add(etiket, simge);
   grup.traverse((o) => (o.userData.asistan = a.id));
-  return { grup, ekranMat, simge, durum: "bosta", zamanlayici: null };
+  return { grup, ekranMat, simge, etiket, durum: "bosta", zamanlayici: null };
 }
 
 function saatiAl() {
@@ -343,12 +378,10 @@ export function ofisKur(kap, masaTiklandi) {
   kamera.position.set(0, 2.45, 5.0);
   const kontrol = new OrbitControls(kamera, renderer.domElement);
   kontrol.target.set(0, 0.9, -2.8);
-  kontrol.enablePan = false;
-  kontrol.minDistance = 1.5;
+  kontrol.screenSpacePanning = false; // sağ tık sürükleme zeminde yürütür
+  kontrol.minDistance = 0.6;
   kontrol.maxDistance = 9;
-  kontrol.minAzimuthAngle = -1.1;
-  kontrol.maxAzimuthAngle = 1.1;
-  kontrol.maxPolarAngle = 1.62;
+  kontrol.maxPolarAngle = 2.5;
   kontrol.update();
 
   const gunes = new THREE.DirectionalLight(0xfff0d8, 1);
@@ -377,10 +410,42 @@ export function ofisKur(kap, masaTiklandi) {
     sahne.add(m.grup);
   });
 
+  // WASD / ok tuşlarıyla yürüme (bakılan yöne göre, zemin düzleminde)
+  const basili = new Set();
+  const TUS = { KeyW: [0, 1], ArrowUp: [0, 1], KeyS: [0, -1], ArrowDown: [0, -1], KeyA: [-1, 0], ArrowLeft: [-1, 0], KeyD: [1, 0], ArrowRight: [1, 0] };
+  addEventListener("keydown", (e) => {
+    if (!TUS[e.code] || e.target.closest?.("input, textarea")) return;
+    basili.add(e.code); e.preventDefault(); istek();
+  });
+  addEventListener("keyup", (e) => basili.delete(e.code));
+  addEventListener("blur", () => basili.clear());
+  let onceki = 0;
+  const ileri = new THREE.Vector3(), sag = new THREE.Vector3(), adim = new THREE.Vector3();
+  const yuru = (t) => {
+    const dt = Math.min((t - onceki) / 1000, 0.05);
+    onceki = t;
+    if (!basili.size) return false;
+    kamera.getWorldDirection(ileri); ileri.y = 0; ileri.normalize();
+    sag.crossVectors(ileri, kamera.up).normalize();
+    adim.set(0, 0, 0);
+    for (const k of basili) { const [x, z] = TUS[k]; adim.addScaledVector(sag, x).addScaledVector(ileri, z); }
+    if (adim.lengthSq()) {
+      adim.normalize().multiplyScalar(2.5 * dt); // 2.5 m/sn yürüme hızı
+      kamera.position.add(adim); kontrol.target.add(adim);
+      kontrol.update();
+    }
+    return true;
+  };
+
   let bekleyen = false;
   const ciz = (t) => {
     bekleyen = false;
-    let animasyon = false;
+    let animasyon = yuru(t);
+    for (const m of Object.values(masalar)) { // çok yakındayken etiketler ekranı kaplamasın
+      const uzak = kamera.position.distanceTo(m.grup.position) > 2.2;
+      m.etiket.visible = uzak;
+      m.simge.visible = uzak && m.durum in DURUM_SIMGE;
+    }
     for (const m of Object.values(masalar)) {
       if (m.durum === "calisiyor") {
         m.simge.position.y = 2.08 + Math.sin(t / 220) * 0.05;
@@ -392,12 +457,15 @@ export function ofisKur(kap, masaTiklandi) {
     if (animasyon) istek();
   };
   const istek = () => { if (!bekleyen) { bekleyen = true; requestAnimationFrame(ciz); } };
-  // Kamera odanın içinde kalsın (duvar/tavan/camdan dışarı çıkmasın)
+  // Yalnızca duvarlar sınır: kamera ve baktığı nokta odanın içinde kalır, dönüş serbest
+  const sinirla = (p, pay) => {
+    p.x = THREE.MathUtils.clamp(p.x, -ODA.x + pay, ODA.x - pay);
+    p.y = THREE.MathUtils.clamp(p.y, 0.4, ODA.h - 0.15);
+    p.z = THREE.MathUtils.clamp(p.z, -ODA.z + pay, ODA.z - pay);
+  };
   kontrol.addEventListener("change", () => {
-    const p = kamera.position;
-    p.x = THREE.MathUtils.clamp(p.x, -ODA.x + 0.4, ODA.x - 0.4);
-    p.y = THREE.MathUtils.clamp(p.y, 0.5, ODA.h - 0.2);
-    p.z = THREE.MathUtils.clamp(p.z, -ODA.z + 0.6, ODA.z - 0.3);
+    sinirla(kamera.position, 0.3);
+    sinirla(kontrol.target, 0.5);
     istek();
   });
 

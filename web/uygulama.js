@@ -58,7 +58,11 @@ function masalariCiz() {
     const m = masa[a.id];
     ofis.durumAyarla(a.id, m?.durum || "bosta", m?.ders || null);
   }
-  $("#devam").hidden = ![...durum.olaylar.values()].some((o) => o.ders === durum.ders && o.durum === "bekliyor");
+  // Limit/hata ya da yeniden başlatma sonrası yarım kalan PDF varsa devam edilebilir
+  const yarim = durum.bilgi?.pdfler?.some((p) => p.toplam == null || p.tamam < p.toplam);
+  const takildi = [...durum.olaylar.values()].some((o) => o.ders === durum.ders && (o.durum === "bekliyor" || o.durum === "hata"));
+  const suruyor = [...durum.olaylar.values()].some((o) => o.ders === durum.ders && o.asistan === "cevirici" && o.durum === "calisiyor");
+  $("#devam").hidden = !(takildi || (yarim && !suruyor));
 }
 
 function olaylariDinle() {
@@ -138,7 +142,10 @@ addEventListener("drop", (e) => {
   if (f) pdfYukle(f);
 });
 
-$("#devam").onclick = async () => { await api(dersApi("/devam"), {}); };
+$("#devam").onclick = async () => {
+  $("#devam").hidden = true;
+  try { await api(dersApi("/devam"), {}); uyariGoster("Kalan işlere devam ediliyor.", true); } catch (e) { uyariGoster(e.message); }
+};
 
 // --- Uyarı çubuğu ---
 let uyariZaman;
@@ -186,8 +193,10 @@ $("#sayac-dugme").onclick = async () => {
 };
 // Pencere kapanırsa süre açık kalmasın
 addEventListener("pagehide", () => {
-  if (sayacAcik()) navigator.sendBeacon(dersApi("/sure"), new Blob([JSON.stringify({ olay: "dur" })], { type: "application/json" }));
+  if (sayacAcik()) fetch(dersApi("/sure"), { method: "POST", keepalive: true, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ olay: "dur" }) });
 });
+// Nabız: sayfa açıkken sunucu oturumu canlı bilir; bilgisayar uyur/çökerse süre son nabızda kesilir
+setInterval(() => { if (sayacAcik()) api(dersApi("/sure"), { olay: "nabiz" }).catch(() => {}); }, 60_000);
 
 // --- Görsele tıkla → hocanın notunda tam sayfa ---
 document.addEventListener("click", (e) => {

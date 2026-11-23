@@ -52,6 +52,31 @@ class DerslerTest(unittest.TestCase):
         self.assertEqual(dersler.guvenli_dosya(self.kok, "Fizik", "ozet/a.md"),
                          (self.kok / "Fizik" / "ozet" / "a.md").resolve())
 
+    def test_eszamanli_yazma_okuma(self):
+        import threading
+        dersler.ders_olustur(self.kok, "CS", "2027-01-15", ["A"])
+        hatalar, dur = [], threading.Event()
+
+        def oku():
+            while not dur.is_set():
+                try:
+                    dersler.oku(self.kok, "CS")
+                except Exception as e:
+                    hatalar.append(e)
+
+        t = threading.Thread(target=oku)
+        t.start()
+        try:
+            for i in range(300):
+                v = dersler.oku(self.kok, "CS")
+                v["konular"][0]["bitti"] = bool(i % 2)
+                dersler.yaz(self.kok, "CS", v)
+        except Exception as e:
+            hatalar.append(e)
+        dur.set()
+        t.join()
+        self.assertEqual(hatalar, [])
+
     def test_ayarlar(self):
         a = ayarlar.yukle()
         self.assertEqual(a["es_zamanli"], 2)

@@ -3,11 +3,27 @@ import json
 import os
 import re
 import tempfile
+import threading
+import time
 from pathlib import Path
 
 ALT_KLASORLER = ["pdf", "metin", "ozet", "formuller", "sorular", "sinavlar", "gorseller"]
 _YASAK = re.compile(r'[<>:"/\\|?*\x00-\x1f]')
 _AYRILMIS = {"con", "prn", "aux", "nul", *(f"com{i}" for i in range(1, 10)), *(f"lpt{i}" for i in range(1, 10))}
+
+
+KILIT = threading.RLock()  # ders.json gibi dosyalarda oku-değiştir-yaz bölümleri için
+
+
+def tekrarla(fn, deneme=50):
+    """Windows: başka iş parçacığı dosyayı okurken os.replace/okuma PermissionError verebilir; kısa bekleyip yeniden dene."""
+    for i in range(deneme):
+        try:
+            return fn()
+        except PermissionError:
+            if i == deneme - 1:
+                raise
+            time.sleep(0.02)
 
 
 class GecersizAd(ValueError):
@@ -41,7 +57,11 @@ def json_yaz(yol: Path, veri) -> None:
     fd, gecici = tempfile.mkstemp(dir=yol.parent, suffix=".tmp")
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(veri, f, ensure_ascii=False, indent=2)
-    os.replace(gecici, yol)
+    try:
+        tekrarla(lambda: os.replace(gecici, yol))
+    finally:
+        if os.path.exists(gecici):
+            os.remove(gecici)
 
 
 def ders_olustur(kok: Path, ad: str, sinav_tarihi: str, konular: list[str]) -> dict:
@@ -68,7 +88,7 @@ def oku(kok: Path, ad: str) -> dict:
     yol = ders_yolu(kok, ad) / "ders.json"
     if not yol.is_file():
         raise FileNotFoundError(ad)
-    return json.loads(yol.read_text("utf-8"))
+    return json.loads(tekrarla(lambda: yol.read_text("utf-8")))
 
 
 def yaz(kok: Path, ad: str, veri: dict) -> None:

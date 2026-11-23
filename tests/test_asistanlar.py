@@ -37,7 +37,7 @@ class AsistanlarTest(SahteClaudeTest):
         self.assertLess(ozet.index("## Parça 01"), ozet.index("## Parça 02"))
         self.assertIn("](../gorseller/notlar-s3-1.png)", ozet)  # ozet/ klasöründen doğru göreli yol
         self.assertIn("metin/notlar/parca-01.md", self.istem())
-        self.assertEqual(self.argv()[self.argv().index("--allowedTools") + 1], "Read")
+        self.assertEqual(self.argv()[self.argv().index("--allowedTools") + 1], "Read(./**)")
 
     def test_formul_goruntu(self):
         self.cevaplar(formulcu={"formuller": [
@@ -68,7 +68,7 @@ class AsistanlarTest(SahteClaudeTest):
         self.assertEqual(s[1]["kaynak"], "https://ocw.mit.edu/x")
         a = self.argv()
         self.assertEqual(a[a.index("--model") + 1], "haiku")
-        self.assertEqual(a[a.index("--allowedTools") + 1], "Read WebSearch WebFetch")
+        self.assertEqual(a[a.index("--allowedTools") + 1], "Read(./**) WebSearch WebFetch")
         self.assertIn("metin/notlar/parca-01.md", self.istem())
         self.assertNotIn("parca-02", self.istem())
 

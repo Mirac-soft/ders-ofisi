@@ -12,7 +12,7 @@ _YER_TUTUCU = re.compile(r"\[\[(G\d+)\]\]")
 
 
 def json_oku(yol: Path, varsayilan):
-    return json.loads(yol.read_text("utf-8")) if yol.exists() else varsayilan
+    return json.loads(dersler.tekrarla(lambda: yol.read_text("utf-8"))) if yol.exists() else varsayilan
 
 
 def sema(ad: str) -> dict:

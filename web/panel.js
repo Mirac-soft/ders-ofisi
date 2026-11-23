@@ -57,13 +57,15 @@ function sohbetCiz(kap, ad, gonder, bekliyor = false) {
 }
 
 async function sohbetGonder(kap, ad, yol, govde) {
-  sohbetCiz(kap, ad, () => {}, true);
+  sohbetCiz(kap, ad, () => uyariGoster("Cevabı bekle, sonra yaz."), true);
+  const anahtar = sohbetAnahtar(ad), url = dersApi(yol); // bekleme sırasında ders değişse de cevap kendi dersine yazılır
+  const ekle = (metin) => localStorage.setItem(anahtar, JSON.stringify([...JSON.parse(localStorage.getItem(anahtar) || "[]"), { kim: "o", metin }].slice(-60)));
   try {
-    const r = await api(dersApi(yol), govde);
-    sohbetYaz(ad, [...sohbetOku(ad), { kim: "o", metin: r.mesaj }]);
+    const r = await api(url, govde);
+    ekle(r.mesaj);
     return r;
   } catch (e) {
-    sohbetYaz(ad, [...sohbetOku(ad), { kim: "o", metin: `⚠️ ${e.message}` }]);
+    ekle(`⚠️ ${e.message}`);
   }
 }
 
@@ -122,12 +124,12 @@ const PANELLER = {
   sinavci(kap) {
     const sonSinav = durum.bilgi.sinavlar.at(-1);
     kap.innerHTML = `${konuSecimi("sinav")}<button class="basla">🎯 Beni test et</button>
-      ${sonSinav ? `<p class="kucuk">Son sınav: ${sonSinav.dogru} doğru, ${sonSinav.yanlis} yanlış. Eksik: ${kacis(sonSinav.eksik_konular.join(", ") || "yok")}</p>` : ""}
+      ${sonSinav ? `<p class="kucuk">Son sınav: ${Number(sonSinav.dogru) || 0} doğru, ${Number(sonSinav.yanlis) || 0} yanlış. Eksik: ${kacis(sonSinav.eksik_konular.join(", ") || "yok")}</p>` : ""}
       <div class="akis"></div><form class="yaz"><input name="metin" placeholder="Cevabın…" autocomplete="off"><button>Gönder</button></form>`;
     const gonder = async (metin, konular) => {
       const r = await sohbetGonder(kap, "sinavci", "/sinav", konular ? { mesaj: metin, konular } : { mesaj: metin });
+      sohbetCiz(kap, "sinavci", gonder);
       if (r?.bitti) { uyariGoster("Sınav bitti. Eksik konular Tekrar planlayıcıya eklendi.", true); await dersYukle(); }
-      else sohbetCiz(kap, "sinavci", gonder);
     };
     sohbetCiz(kap, "sinavci", gonder);
     kap.querySelector(".basla").onclick = () => {

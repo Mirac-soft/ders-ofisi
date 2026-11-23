@@ -23,7 +23,7 @@ class CagirTest(SahteClaudeTest):
         self.assertEqual(sonuc, {"a": 1})
         self.assertEqual(oturum, "s-CS")
         c = self.cagrilar()[0]
-        for arg in ["-p", "istem", "--output-format", "json", "--model", "sonnet", "--json-schema", "--allowedTools", "Read",
+        for arg in ["-p", "istem", "--output-format", "json", "--model", "sonnet", "--json-schema", "--allowedTools", "Read(./**)",
                     "--append-system-prompt-file"]:
             self.assertIn(arg, c["argv"])
         self.assertNotIn("--resume", c["argv"])

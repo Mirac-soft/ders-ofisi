@@ -6,6 +6,13 @@ from pathlib import Path
 from ofis import dersler
 
 TEKRAR_GUNLERI = (1, 3, 7)
+BAYAT = timedelta(minutes=3)  # sayfa bu kadar süredir nabız göndermiyorsa kapanmış sayılır
+
+
+def _bitis(o: dict, simdi: datetime) -> datetime:
+    """Açık oturumun gerçek sonu: sayfa kapanıp/bilgisayar uyuduysa son görülme anı, değilse şimdi."""
+    son = datetime.fromisoformat(o.get("son_gorulme") or o["basla"])
+    return son if simdi - son > BAYAT else simdi
 
 
 def _iso(t: datetime) -> str:
@@ -13,27 +20,39 @@ def _iso(t: datetime) -> str:
 
 
 def sure_basla(kok: Path, ders: str, simdi: datetime) -> None:
-    for d in dersler.listele(kok):  # aynı anda tek ders sayılır; çökmeden kalan açık oturumlar da kapanır
-        sure_dur(kok, d, simdi)
-    v = dersler.oku(kok, ders)
-    v["oturumlar"].append({"basla": _iso(simdi), "bitis": None})
-    dersler.yaz(kok, ders, v)
+    with dersler.KILIT:
+        for d in dersler.listele(kok):  # aynı anda tek ders sayılır; çökmeden kalan açık oturumlar da kapanır
+            sure_dur(kok, d, simdi)
+        v = dersler.oku(kok, ders)
+        v["oturumlar"].append({"basla": _iso(simdi), "bitis": None, "son_gorulme": _iso(simdi)})
+        dersler.yaz(kok, ders, v)
+
+
+def sure_nabiz(kok: Path, ders: str, simdi: datetime) -> None:
+    with dersler.KILIT:
+        v = dersler.oku(kok, ders)
+        for o in v["oturumlar"]:
+            if o["bitis"] is None:
+                o["son_gorulme"] = _iso(simdi)
+                dersler.yaz(kok, ders, v)
 
 
 def sure_dur(kok: Path, ders: str, simdi: datetime) -> None:
-    v = dersler.oku(kok, ders)
-    degisti = False
-    for o in v["oturumlar"]:
-        if o["bitis"] is None:
-            o["bitis"] = _iso(max(simdi, datetime.fromisoformat(o["basla"])))
-            degisti = True
-    if degisti:
-        dersler.yaz(kok, ders, v)
+    with dersler.KILIT:
+        v = dersler.oku(kok, ders)
+        degisti = False
+        for o in v["oturumlar"]:
+            if o["bitis"] is None:
+                o["bitis"] = _iso(max(_bitis(o, simdi), datetime.fromisoformat(o["basla"])))
+                o.pop("son_gorulme", None)
+                degisti = True
+        if degisti:
+            dersler.yaz(kok, ders, v)
 
 
 def _araliklar(v: dict, simdi: datetime):
     for o in v["oturumlar"]:
-        yield datetime.fromisoformat(o["basla"]), datetime.fromisoformat(o["bitis"]) if o["bitis"] else simdi
+        yield datetime.fromisoformat(o["basla"]), datetime.fromisoformat(o["bitis"]) if o["bitis"] else _bitis(o, simdi)
 
 
 def _ortusme_saat(araliklar, bas: datetime, son: datetime) -> float:
@@ -81,6 +100,11 @@ def _tekrar_oku(kok, ders) -> list[dict]:
 
 
 def tekrar_ekle(kok: Path, ders: str, konular: list[str], bugun: date) -> None:
+    with dersler.KILIT:
+        _tekrar_ekle(kok, ders, konular, bugun)
+
+
+def _tekrar_ekle(kok, ders, konular, bugun):
     liste = _tekrar_oku(kok, ders)
     var = {(e["konu"], e["tarih"]) for e in liste}
     for konu in konular:

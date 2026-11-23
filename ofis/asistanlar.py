@@ -14,6 +14,11 @@ def _cagir(ayar, dyol, ad, istem, araclar=("Read",), oturum=None):
 
 
 def _bolum_yaz(yol: Path, no: int, icerik: str) -> None:
+    with dersler.KILIT:
+        _bolum_yaz_(yol, no, icerik)
+
+
+def _bolum_yaz_(yol: Path, no: int, icerik: str) -> None:
     """`## Parça NN` bölümlerini parça sırasıyla tutar; aynı parça tekrar işlenirse yerine yazar."""
     bolumler = {}
     if yol.exists():
@@ -84,6 +89,11 @@ def soru_ara(ayar, kok, ders, konular: list[str]) -> None:
 
 
 def _oturum(kok, ders, anahtar, yeni: str | None = None, sil=False) -> str | None:
+    with dersler.KILIT:
+        return _oturum_(kok, ders, anahtar, yeni, sil)
+
+
+def _oturum_(kok, ders, anahtar, yeni, sil):
     v = dersler.oku(kok, ders)
     if sil:
         v["sohbetler"].pop(anahtar, None)

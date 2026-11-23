@@ -23,7 +23,7 @@ def cagir(ayar: dict, cwd: Path, istem: str, model: str, sistem_dosyasi: Path, s
           araclar: list[str], oturum: str | None = None) -> tuple[dict, str]:
     komut = [*ayar["claude_komutu"], "-p", istem, "--output-format", "json", "--model", model,
              "--append-system-prompt-file", str(sistem_dosyasi), "--json-schema", json.dumps(sema, ensure_ascii=False),
-             "--allowedTools", " ".join(araclar)]
+             "--allowedTools", " ".join("Read(./**)" if a == "Read" else a for a in araclar)]  # Read'i ders klasörüyle sınırla
     if oturum:
         komut += ["--resume", oturum]
     try:

@@ -27,7 +27,8 @@ class SunucuTest(SahteClaudeTest):
 
     def istek(self, yol, govde=None, yontem=None, basliklar=None):
         veri = json.dumps(govde).encode() if isinstance(govde, (dict, list)) else govde
-        r = urllib.request.Request(self.url + yol, data=veri, method=yontem, headers=basliklar or {})
+        b = {"Content-Type": "application/json"} if isinstance(govde, (dict, list)) else {}
+        r = urllib.request.Request(self.url + yol, data=veri, method=yontem, headers=b | (basliklar or {}))
         try:
             with urllib.request.urlopen(r, timeout=10) as y:
                 icerik = y.read()
@@ -114,6 +115,31 @@ class SunucuTest(SahteClaudeTest):
         s, png = self.istek("/api/ders/CS/sayfa/Ders%20Notu/3")
         self.assertEqual((s, png[:4]), (200, b"\x89PNG"))
         self.assertEqual(self.istek("/api/ders/CS/pdf", pdf.read_bytes(), "POST", {"X-Dosya-Adi": quote("Ders Notu.pdf")})[0], 409)
+
+    def test_cift_devam_tek_cevirir(self):
+        self.ders(konular=["Limit"])
+        self.cevaplar(cevirici=CEVAP, ozetci={"ozet_md": "ö"}, formulcu={"formuller": []})
+        os.environ["SAHTE_CLAUDE_BEKLE"] = "0.5"
+        pdf = ornek_pdf(self.kok.parent / "N.pdf", sayfa=25)
+        self.istek("/api/ders/CS/pdf", pdf.read_bytes(), "POST", {"X-Dosya-Adi": "N.pdf"})
+        self.istek("/api/ders/CS/devam", {})
+        self.istek("/api/ders/CS/devam", {})
+        bitis = time.time() + 20
+        while time.time() < bitis and self.istek("/api/ders/CS")[1]["pdfler"][0]["tamam"] < 2:
+            time.sleep(0.2)
+        time.sleep(1.5)
+        cevirici = [c for c in self.cagrilar() if any(a.endswith("cevirici.md") for a in c["argv"])]
+        self.assertEqual(len(cevirici), 2)  # 2 parça, her biri bir kez
+        ozet = [c for c in self.cagrilar() if any(a.endswith("ozetci.md") for a in c["argv"])]
+        self.assertEqual(len(ozet), 2)
+
+    def test_yabanci_istek_reddedilir(self):
+        govde = json.dumps({"ad": "X", "sinav_tarihi": "2027-01-15", "konular": []}).encode()
+        self.assertEqual(self.istek("/api/dersler", govde, "POST", {"Content-Type": "text/plain"})[0], 415)
+        self.assertEqual(self.istek("/api/dersler", govde, "POST", {"Content-Type": "application/json", "Origin": "https://kotu.example"})[0], 403)
+        self.assertEqual(self.istek("/api/dersler", govde, "POST", {"Content-Type": "application/json", "Host": "kotu.example"})[0], 403)
+        self.assertEqual(self.istek("/api/dersler")[1]["dersler"], [])
+        self.assertEqual(self.istek("/api/dersler", govde, "POST", {"Content-Type": "application/json", "Origin": self.url})[0], 200)
 
     def test_limit_429(self):
         self.ders()

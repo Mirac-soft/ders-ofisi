@@ -4,6 +4,7 @@ import mimetypes
 import queue
 import re
 import shutil
+import threading
 import traceback
 from datetime import date, datetime
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -31,6 +32,8 @@ class Ofis:
         self.ayar, self.kok = ayar, Path(kok)
         self.kok.mkdir(parents=True, exist_ok=True)
         self.yayinci = Yayinci()
+        self._suren: set[tuple] = set()  # kuyrukta/çalışan işler: aynı iş iki kez limit harcamasın
+        self._suren_kilit = threading.Lock()
         self.kuyruk = Kuyruk(ayar["es_zamanli"], self.yayinci)
         self.uyari = None if shutil.which(ayar["claude_komutu"][0]) or Path(ayar["claude_komutu"][0]).exists() else \
             "Claude Code bulunamadı: asistanlar çalışamaz. ayarlar.json içindeki claude_komutu yolunu kontrol et."
@@ -44,12 +47,27 @@ class Ofis:
             raise Hata(404, "ders yok")
 
     # --- arka plan işleri ---
+    def _tekil(self, anahtar: tuple, ders: str, asistan: str, fn) -> None:
+        with self._suren_kilit:
+            if anahtar in self._suren:
+                return
+            self._suren.add(anahtar)
+
+        def calis():
+            try:
+                fn()
+            finally:
+                with self._suren_kilit:
+                    self._suren.discard(anahtar)
+
+        self.kuyruk.ekle(ders, asistan, calis)
+
     def parca_isleri(self, ders, pdf_adi, no):
-        self.kuyruk.ekle(ders, "ozetci", lambda: asistanlar.ozetle(self.ayar, self.kok, ders, pdf_adi, no))
-        self.kuyruk.ekle(ders, "formulcu", lambda: asistanlar.formul_cikar(self.ayar, self.kok, ders, pdf_adi, no))
+        self._tekil(("ozet", ders, pdf_adi, no), ders, "ozetci", lambda: asistanlar.ozetle(self.ayar, self.kok, ders, pdf_adi, no))
+        self._tekil(("formul", ders, pdf_adi, no), ders, "formulcu", lambda: asistanlar.formul_cikar(self.ayar, self.kok, ders, pdf_adi, no))
 
     def cevir(self, ders, pdf_adi):
-        self.kuyruk.ekle(ders, "cevirici", lambda: cevirme.cevir(
+        self._tekil(("cevir", ders, pdf_adi), ders, "cevirici", lambda: cevirme.cevir(
             self.ayar, self.kok, ders, pdf_adi, lambda no, _md: self.parca_isleri(ders, pdf_adi, no)))
 
     def pdfler(self, ders) -> list[dict]:
@@ -101,6 +119,8 @@ def _isleyici(ofis: Ofis):
             self.send_header("Content-Type", tur)
             self.send_header("Content-Length", str(len(govde)))
             self.send_header("Cache-Control", "no-store")
+            if self.close_connection:
+                self.send_header("Connection", "close")
             self.end_headers()
             self.wfile.write(govde)
 
@@ -113,12 +133,15 @@ def _isleyici(ofis: Ofis):
             self._gonder(200, yol.read_bytes(), mimetypes.guess_type(yol.name)[0] or "application/octet-stream")
 
         def _govde(self, sinir=JSON_SINIR) -> bytes:
-            n = int(self.headers.get("Content-Length") or 0)
+            n = max(int(self.headers.get("Content-Length") or 0), 0)
             if n > sinir:
                 raise Hata(413, "çok büyük")
+            self._okundu = True
             return self.rfile.read(n)
 
         def _json_govde(self) -> dict:
+            if self.headers.get_content_type() != "application/json":  # başka sitelerin basit (preflight'sız) isteklerini keser
+                raise Hata(415, "Content-Type application/json olmalı")
             try:
                 v = json.loads(self._govde() or b"{}")
             except json.JSONDecodeError:
@@ -131,10 +154,30 @@ def _isleyici(ofis: Ofis):
             # Önce böl, sonra çöz: %2F bir parçanın içinde kalır ve ad doğrulamasına takılır
             return [unquote(p) for p in urlsplit(self.path).path.split("/") if p]
 
+        def _govdeyi_at(self):
+            """Okunmamış gövdeyle yanıt verilirse Windows bağlantıyı koparır; hata yanıtından önce oku ya da bağlantıyı kapat."""
+            if self.command == "POST" and not self._okundu:
+                n = max(int(self.headers.get("Content-Length") or 0), 0)
+                if n <= JSON_SINIR:
+                    self.rfile.read(n)
+                else:
+                    self.close_connection = True
+
+        def _yerel_mi(self) -> bool:
+            """DNS rebinding ve başka sitelerden gelen istekleri engeller: yalnızca bu sunucunun kendi sayfası."""
+            port = self.server.server_address[1]
+            izinli = {f"127.0.0.1:{port}", f"localhost:{port}"}
+            origin = self.headers.get("Origin")
+            return self.headers.get("Host", "") in izinli and (origin is None or origin.split("://", 1)[-1] in izinli)
+
         def _yakala(self, fn):
+            self._okundu = False
             try:
+                if not self._yerel_mi():
+                    raise Hata(403, "yalnızca yerel ofis sayfası")
                 fn()
             except Hata as e:
+                self._govdeyi_at()
                 self._json({"hata": str(e)}, e.kod)
             except dersler.GecersizAd:
                 self._json({"hata": "geçersiz ad veya yol"}, 400)
@@ -228,17 +271,19 @@ def _isleyici(ofis: Ofis):
                 elif eylem == "not":
                     hesap.not_ekle(ofis.kok, ders, str(v.get("metin", "")), simdi)
                 elif eylem == "konu":
-                    d = dersler.oku(ofis.kok, ders)
-                    for k in d["konular"]:
-                        if k["ad"] == v.get("konu"):
-                            k["bitti"] = bool(v.get("bitti"))
-                    dersler.yaz(ofis.kok, ders, d)
+                    with dersler.KILIT:
+                        d = dersler.oku(ofis.kok, ders)
+                        for k in d["konular"]:
+                            if k["ad"] == v.get("konu"):
+                                k["bitti"] = bool(v.get("bitti"))
+                        dersler.yaz(ofis.kok, ders, d)
                 elif eylem == "konular":
-                    d = dersler.oku(ofis.kok, ders)
-                    eski = {k["ad"]: k["bitti"] for k in d["konular"]}
-                    adlar = list(dict.fromkeys(str(k).strip() for k in v.get("konular") or [] if str(k).strip()))
-                    d["konular"] = [{"ad": a, "bitti": eski.get(a, False)} for a in adlar]
-                    dersler.yaz(ofis.kok, ders, d)
+                    with dersler.KILIT:
+                        d = dersler.oku(ofis.kok, ders)
+                        eski = {k["ad"]: k["bitti"] for k in d["konular"]}
+                        adlar = list(dict.fromkeys(str(k).strip() for k in v.get("konular") or [] if str(k).strip()))
+                        d["konular"] = [{"ad": a, "bitti": eski.get(a, False)} for a in adlar]
+                        dersler.yaz(ofis.kok, ders, d)
                 elif eylem == "tekrar":
                     hesap.tekrar_yapildi(ofis.kok, ders, str(v.get("konu", "")), simdi.date())
                 elif eylem == "sure":
@@ -246,8 +291,10 @@ def _isleyici(ofis: Ofis):
                         hesap.sure_basla(ofis.kok, ders, simdi)
                     elif v.get("olay") == "dur":
                         hesap.sure_dur(ofis.kok, ders, simdi)
+                    elif v.get("olay") == "nabiz":
+                        hesap.sure_nabiz(ofis.kok, ders, simdi)
                     else:
-                        raise Hata(400, "olay basla/dur olmalı")
+                        raise Hata(400, "olay basla/dur/nabiz olmalı")
                 else:
                     raise Hata(404, "yok")
                 return self._json({"tamam": True})

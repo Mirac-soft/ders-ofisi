@@ -26,19 +26,35 @@ class HesapTest(unittest.TestCase):
 
     def test_ders_degisince_sure(self):
         hesap.sure_basla(self.kok, "CS", t(23, 10))
+        hesap.sure_nabiz(self.kok, "CS", t(23, 10, 59))  # açık sayfa dakikada bir nabız gönderir
         hesap.sure_basla(self.kok, "Math 1", t(23, 11))
         self.assertEqual(self.oturumlar("CS"), [{"basla": "2026-11-23T10:00:00", "bitis": "2026-11-23T11:00:00"}])
         self.assertIsNone(self.oturumlar("Math 1")[0]["bitis"])
+        hesap.sure_nabiz(self.kok, "Math 1", t(23, 11, 29))
         hesap.sure_dur(self.kok, "Math 1", t(23, 11, 30))
         self.assertEqual(self.oturumlar("Math 1")[0]["bitis"], "2026-11-23T11:30:00")
 
     def test_acik_oturum_kapanir(self):
-        hesap.sure_basla(self.kok, "CS", t(23, 10))  # sunucu çöktü, oturum açık kaldı
+        hesap.sure_basla(self.kok, "CS", t(23, 10))
+        hesap.sure_nabiz(self.kok, "CS", t(23, 11, 50))  # 11:50'de sunucu çöktü, oturum açık kaldı
         hesap.sure_basla(self.kok, "CS", t(23, 12))
         o = self.oturumlar("CS")
         self.assertEqual(len(o), 2)
-        self.assertEqual(o[0]["bitis"], "2026-11-23T12:00:00")
+        self.assertEqual(o[0]["bitis"], "2026-11-23T11:50:00")  # son görülme: süre kaybolmaz, uydurulmaz
         self.assertIsNone(o[1]["bitis"])
+
+    def test_unutulan_sayac_geceyi_saymaz(self):
+        hesap.sure_basla(self.kok, "CS", t(23, 10))
+        hesap.sure_nabiz(self.kok, "CS", t(23, 10, 30))  # sayfa en son 10:30'da açıktı, sonra bilgisayar kapandı
+        self.assertAlmostEqual(hesap.sure_analizi(self.kok, "CS", t(24, 9))["toplam_saat"], 0.5)
+        hesap.sure_basla(self.kok, "CS", t(24, 9))
+        self.assertEqual(self.oturumlar("CS")[0]["bitis"], "2026-11-23T10:30:00")
+
+    def test_nabiz_tazeyse_simdi_kapanir(self):
+        hesap.sure_basla(self.kok, "CS", t(23, 10))
+        hesap.sure_nabiz(self.kok, "CS", t(23, 10, 59))
+        hesap.sure_dur(self.kok, "CS", t(23, 11))
+        self.assertEqual(self.oturumlar("CS")[0]["bitis"], "2026-11-23T11:00:00")
 
     def test_dur_acik_yoksa_sessiz(self):
         hesap.sure_dur(self.kok, "CS", t(23, 10))
@@ -72,6 +88,7 @@ class HesapTest(unittest.TestCase):
 
     def test_acik_oturum_sayilir(self):
         hesap.sure_basla(self.kok, "CS", t(23, 8))
+        hesap.sure_nabiz(self.kok, "CS", t(23, 9, 29))
         self.assertAlmostEqual(hesap.sure_analizi(self.kok, "CS", t(23, 9, 30))["toplam_saat"], 1.5)
 
     def test_analiz_veri_yok(self):
